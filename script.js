@@ -3,7 +3,7 @@ const cardContainer = document.getElementById("cardContainer");
 const callBtn = document.getElementById("call-btn");
 let cart = [];
 
-// categories added
+// categories
 
 const loadCategory = () => {
   fetch("https://openapi.programming-hero.com/api/categories")
@@ -58,7 +58,7 @@ const showCategory = (categories) => {
   });
 };
 
-// tree added by category
+// Load plants by category
 const loadPlantByCategory = (id) => {
   manageSpinner(true);
   fetch(`https://openapi.programming-hero.com/api/category/${id}`)
@@ -87,11 +87,11 @@ const showPlantByCategory = (plants) => {
         <h2 onclick="loadWordDetail(${plant.id})">${plant.name}</h2>
         <p class="text-[10px] text-gray-500">${plant.description}</p>
         <div class="mt-2 flex justify-between items-center">
-          <div class="bg-[#CFF0DC] rounded-2xl p-2 text-green-500 w-[100px] text-center text-[10px]">
+          <div class="bg-[#CFF0DC] rounded-2xl p-2 text-green-700 w-[100px] text-center text-[10px]">
             <p>${plant.category}</p>
           </div>
           <div>
-            <p id="plant-price" class="text-xl font-semibold">$ ${plant.price}</p>
+            <p id="plant-price" class="text-xl font-semibold">৳ ${plant.price}</p>
           </div>
         </div>
         <div class="card-actions">
@@ -127,7 +127,7 @@ const loadAllPlants = () => {
     .catch((err) => showError("Failed to load plants."));
 };
 
-
+// Initial load
 loadCategory();
 loadAllPlants();
 
@@ -142,15 +142,18 @@ const handleCart = (e) => {
   const category = e.target.parentNode.parentNode.children[0].innerText;
   const price =
     e.target.parentNode.parentNode.children[2].children[1].innerText;
-  console.log(price);
-  alert(`${category} has been added to the cart`);
-  
 
-  cart.push({
-    category: category,
-    price: price,
-  });
+  const existing = cart.find((item) => item.category === category);
 
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.push({
+      category: category,
+      price: price,
+      quantity: 1,
+    });
+  }
   showCart(cart);
 };
 
@@ -159,16 +162,16 @@ const showCart = (cart) => {
   let total = 0;
 
   cart.forEach((cartAdd) => {
-    const priceNum = parseFloat(cartAdd.price.replace("$", "").trim());
-    total += priceNum;
+    const priceNum = parseFloat(cartAdd.price.replace("৳", "").trim());
+    total += priceNum * cartAdd.quantity;
 
     callBtn.innerHTML += `
       <div class="flex justify-between items-center rounded-sm bg-[#f7fff9] shadow-sm my-2 p-2">
         <div>
           <h1 class="text-[14px] font-bold ">${cartAdd.category}</h1>
-          <h1 class="text-gray-500">${cartAdd.price}</h1>
+          <h1 class="text-gray-500">${cartAdd.price} x${cartAdd.quantity}</h1>
         </div>
-        <button onclick="handleDeleteCart('${cartAdd.category}')" class="btn btn-xs"><i class="fa-solid fa-xmark"></i></button>
+        <button onclick="handleDeleteCart('${cartAdd.category}')" class="btn btn-xs">❌</button>
       </div>
     `;
   });
@@ -176,15 +179,21 @@ const showCart = (cart) => {
   if (cart.length > 0) {
     callBtn.innerHTML += `
       <div class="border-t mt-3 pt-2 text-right font-semibold text-lg">
-        Total: $${total.toFixed(2)}
+        Total: ৳${total.toFixed(2)}
       </div>
     `;
   }
 };
 
 const handleDeleteCart = (category) => {
-  const filteredCart = cart.filter((cartAdd) => cartAdd.category !== category);
-  cart = filteredCart;
+  const item = cart.find((cartAdd) => cartAdd.category === category);
+  if (item) {
+    if (item.quantity > 1) {
+      item.quantity -= 1;
+    } else {
+      cart = cart.filter((cartAdd) => cartAdd.category !== category);
+    }
+  }
   showCart(cart);
 };
 
@@ -214,7 +223,8 @@ const displayWordDetails = (plant) => {
     <span class="text-[14px] font-bold text-black">Description:</span> ${plant.description}
   </p>
 </div>
- `;
-//  model part hover
+
+  `;
+  // modal show
   document.getElementById("word_modal").showModal();
 };
